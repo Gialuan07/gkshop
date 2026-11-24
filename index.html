@@ -1,0 +1,1730 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GKShop — Digital Accounts & Instant Payment (VietQR · Binance Pay · Card)</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%2310b981'/%3E%3Cstop offset='100%25' stop-color='%230d9488'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='16' fill='url(%23g)'/%3E%3Ctext x='32' y='42' text-anchor='middle' font-family='Inter,Arial,sans-serif' font-size='28' font-weight='800' fill='white'%3EGK%3C/text%3E%3C/svg%3E" />
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
+    .fade-in { animation: fadeIn 0.2s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    .pulse-dot { animation: pulseDot 1.8s infinite; }
+    @keyframes pulseDot { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.45; transform: scale(1.25); } }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col">
+
+  <!-- Top Notice Banner -->
+  <div id="topBanner" class="bg-emerald-900 text-emerald-50 text-xs sm:text-sm py-2 px-4">
+    <div class="max-w-6xl mx-auto flex items-center justify-between gap-3">
+      <div class="flex items-center gap-2 truncate">
+        <span class="inline-flex h-2 w-2 rounded-full bg-emerald-400 pulse-dot shrink-0"></span>
+        <span id="bannerNoticeText" class="truncate">Chào mừng đến GKShop! Hỗ trợ VietQR Vietcombank (VN) và Binance Pay / Card quốc tế (USD).</span>
+      </div>
+      <button type="button" id="closeBannerBtn" class="text-emerald-200 hover:text-white shrink-0 p-0.5" aria-label="Đóng thông báo">
+        <i data-lucide="x" class="w-4 h-4"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Sticky Navbar -->
+  <header class="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-slate-200">
+    <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between gap-2 sm:gap-3">
+      <button type="button" id="brandHomeBtn" class="flex items-center gap-2.5 text-left shrink-0">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white font-extrabold flex items-center justify-center shadow-sm text-sm tracking-tight">
+          GK
+        </div>
+        <div>
+          <div class="font-extrabold text-slate-900 leading-none tracking-tight text-base">GKSHOP</div>
+          <div class="text-[11px] text-emerald-600 font-semibold tracking-wide mt-0.5">GKSHOP.SITE</div>
+        </div>
+      </button>
+
+      <nav class="hidden md:flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
+        <button type="button" data-view="store" id="navStoreDesktop" class="nav-tab px-4 py-1.5 rounded-lg text-sm font-semibold transition">Cửa hàng</button>
+        <button type="button" data-view="orders" id="navOrdersDesktop" class="nav-tab px-4 py-1.5 rounded-lg text-sm font-semibold transition">Đơn của tôi</button>
+      </nav>
+
+      <div class="flex items-center gap-1.5 sm:gap-2">
+        <!-- Language & Currency Switcher (VI / EN) -->
+        <div class="inline-flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200 text-xs font-bold">
+          <button type="button" id="langViBtn" class="px-2 py-1.5 rounded-lg transition">VI</button>
+          <button type="button" id="langEnBtn" class="px-2 py-1.5 rounded-lg transition">EN</button>
+        </div>
+
+        <button type="button" id="openCartBtn" class="relative inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl border border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/50 text-slate-700 text-sm font-semibold transition">
+          <i data-lucide="shopping-cart" class="w-4 h-4 text-emerald-600"></i>
+          <span id="cartBtnLabel" class="hidden sm:inline">Giỏ hàng</span>
+          <span id="cartCountBadge" class="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-emerald-600 text-white text-xs font-bold">0</span>
+        </button>
+
+        <div id="authArea" class="flex items-center gap-2"></div>
+
+        <button type="button" id="mobileMenuBtn" class="md:hidden p-2 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-100" aria-label="Menu">
+          <i data-lucide="menu" class="w-5 h-5"></i>
+        </button>
+      </div>
+    </div>
+
+    <div id="mobileNav" class="hidden md:hidden border-t border-slate-200 bg-white px-4 py-2.5 flex gap-2">
+      <button type="button" data-view="store" id="navStoreMobile" class="nav-tab flex-1 py-2 rounded-lg text-xs font-semibold text-center">Cửa hàng</button>
+      <button type="button" data-view="orders" id="navOrdersMobile" class="nav-tab flex-1 py-2 rounded-lg text-xs font-semibold text-center">Đơn của tôi</button>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="flex-1 max-w-6xl w-full mx-auto px-4 py-6">
+
+    <!-- VIEW 1: STOREFRONT -->
+    <section id="view-store" class="space-y-8 fade-in">
+      <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-emerald-950 to-teal-900 text-white p-6 sm:p-8 shadow-lg">
+        <div class="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div class="space-y-3 max-w-2xl">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-200 text-xs font-semibold">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 pulse-dot"></span>
+              <span id="heroStatusText">Đang hoạt động · Giờ hỗ trợ 08:00–22:00 (GMT+7)</span>
+            </div>
+            <h1 id="heroTitle" class="text-2xl sm:text-4xl font-extrabold tracking-tight leading-tight">
+              Tài khoản bản quyền giá tốt tại <span class="text-emerald-400">GKShop</span>
+            </h1>
+            <p id="heroSubtitle" class="text-slate-300 text-sm sm:text-base">
+              Uy tín · Giá rẻ · Bảo hành rõ ràng. Hỗ trợ VietQR Vietcombank tại Việt Nam và Binance Pay / Visa-Mastercard quốc tế.
+            </p>
+            <div class="flex flex-wrap items-center gap-3 pt-1 text-xs sm:text-sm text-emerald-100/90">
+              <span id="heroStatsBadge" class="inline-flex items-center gap-1.5 bg-white/10 px-3 py-1.5 rounded-xl font-medium">
+                <i data-lucide="package" class="w-4 h-4 text-emerald-400"></i> 8 nhóm sản phẩm · 21 gói
+              </span>
+              <span id="heroPayBadge" class="inline-flex items-center gap-1.5 bg-white/10 px-3 py-1.5 rounded-xl font-medium">
+                <i data-lucide="qr-code" class="w-4 h-4 text-emerald-400"></i> VietQR · Binance Pay · Card
+              </span>
+              <a id="heroHotlineLink" href="https://zalo.me/0909603207" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-xl font-medium transition">
+                <i data-lucide="message-circle" class="w-4 h-4 text-emerald-400"></i> <span id="heroHotlineText">Zalo hỗ trợ: 0909603207</span>
+              </a>
+            </div>
+          </div>
+
+          <div class="bg-white/10 border border-white/15 rounded-2xl p-4 sm:p-5 backdrop-blur-sm lg:w-72 shrink-0 space-y-3">
+            <div id="searchBoxLabel" class="text-xs font-semibold uppercase tracking-wider text-emerald-300">Tìm nhanh sản phẩm</div>
+            <div class="relative">
+              <i data-lucide="search" class="w-4 h-4 text-slate-300 absolute left-3 top-1/2 -translate-y-1/2"></i>
+              <input id="searchInput" type="text" placeholder="ChatGPT, CapCut, Canva..." class="w-full pl-9 pr-3 py-2.5 rounded-xl bg-white/15 border border-white/20 text-white placeholder-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400" />
+            </div>
+            <div id="heroPayNote" class="text-[11px] text-slate-300 leading-relaxed">
+              Thanh toán qua <strong class="text-white">Vietcombank · 1060568676</strong> hoặc chuyển <strong class="text-white">EN (USD)</strong> cho khách quốc tế.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Category Filter Pills -->
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div id="categoryTabs" class="flex flex-wrap items-center gap-2"></div>
+        <div id="resultCountText" class="text-xs sm:text-sm text-slate-500 font-medium"></div>
+      </div>
+
+      <!-- Product Grid -->
+      <div id="productGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
+
+      <!-- 3-Step Process -->
+      <div class="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8">
+        <h2 id="stepsHeading" class="text-lg sm:text-xl font-bold text-slate-900 mb-5">Quy trình mua hàng trong 3 bước</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-2">
+            <div class="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 font-bold flex items-center justify-center">1</div>
+            <div id="step1Title" class="font-bold text-slate-900">Chọn sản phẩm & gói</div>
+            <p id="step1Desc" class="text-sm text-slate-600">Mở sản phẩm bạn cần, đọc mô tả gói, chọn thời hạn phù hợp và bấm Mua ngay hoặc Thêm vào giỏ.</p>
+          </div>
+          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-2">
+            <div class="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 font-bold flex items-center justify-center">2</div>
+            <div id="step2Title" class="font-bold text-slate-900">Thanh toán & bấm xác nhận</div>
+            <p id="step2Desc" class="text-sm text-slate-600">Quét mã VietQR Vietcombank, Binance Pay (USDT) hoặc thẻ Visa/Mastercard qua NOWPayments, rồi bấm "Tôi đã chuyển tiền".</p>
+          </div>
+          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-2">
+            <div class="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 font-bold flex items-center justify-center">3</div>
+            <div id="step3Title" class="font-bold text-slate-900">Theo dõi & nhận tài khoản</div>
+            <p id="step3Desc" class="text-sm text-slate-600">Trạng thái đơn cập nhật ngay trong mục Đơn của tôi kèm thông tin tài khoản và bảo hành đầy đủ.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 2: MY ORDERS -->
+    <section id="view-orders" class="hidden space-y-5 fade-in">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 id="ordersHeading" class="text-xl sm:text-2xl font-extrabold text-slate-900">Đơn hàng của tôi</h2>
+          <p id="ordersSubheading" class="text-sm text-slate-500">Theo dõi trạng thái kiểm tra thanh toán và nhận tài khoản đã mua.</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button type="button" id="refreshOrdersBtn" class="px-3.5 py-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs sm:text-sm font-semibold transition">
+            Làm mới trạng thái
+          </button>
+          <button type="button" data-view="store" id="continueShopBtn" class="nav-jump px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold transition">
+            Tiếp tục mua sắm
+          </button>
+        </div>
+      </div>
+      <div id="ordersContent"></div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-white border-t border-slate-200 mt-10">
+    <div class="max-w-6xl mx-auto px-4 py-8 grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
+      <div class="space-y-2">
+        <div class="font-extrabold text-slate-900 text-base">GKSHOP · GKSHOP.SITE</div>
+        <p id="footerDesc" class="text-slate-500 text-xs leading-relaxed">Hệ thống bán tài khoản số uy tín, thanh toán nhanh qua VietQR Vietcombank, Binance Pay và thẻ quốc tế.</p>
+      </div>
+      <div class="space-y-1.5">
+        <div id="footerContactTitle" class="font-bold text-slate-900">Thông tin liên hệ</div>
+        <div id="footerHotline" class="text-slate-600 text-xs">Hotline / Zalo: 0909603207</div>
+        <div id="footerHours" class="text-slate-600 text-xs">Giờ hỗ trợ: 08:00–22:00 (GMT+7)</div>
+      </div>
+      <div class="space-y-1.5">
+        <div id="footerPayTitle" class="font-bold text-slate-900">Thanh toán an toàn</div>
+        <p id="footerPayDesc" class="text-slate-600 text-xs">Hỗ trợ VietQR Napas, Binance Pay (0% phí) và Visa/Mastercard qua NOWPayments.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- MODAL: PACKAGE SELECTION -->
+  <div id="packageModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl p-6 space-y-4 fade-in">
+      <div class="flex items-start justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <div id="modalProdIcon" class="w-12 h-12 rounded-2xl overflow-hidden flex items-center justify-center shrink-0"></div>
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <h3 id="modalProdTitle" class="font-extrabold text-lg text-slate-900"></h3>
+              <span id="modalProdSoldBadge" class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200"></span>
+            </div>
+            <p id="modalProdDesc" class="text-xs text-slate-500 mt-0.5 whitespace-pre-line"></p>
+          </div>
+        </div>
+        <button type="button" data-close-modal="packageModal" class="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="space-y-2">
+        <div id="modalChoosePkgLabel" class="text-xs font-bold uppercase tracking-wider text-slate-500">Chọn gói dịch vụ</div>
+        <div id="modalPackagesList" class="space-y-2"></div>
+      </div>
+
+      <div id="modalPkgDetailBox" class="p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-200 space-y-1">
+        <div class="text-xs font-bold text-emerald-900 flex items-center gap-1.5">
+          <i data-lucide="file-text" class="w-3.5 h-3.5 text-emerald-600"></i>
+          <span id="modalPkgDetailTitle">Thông tin gói đang chọn</span>
+        </div>
+        <div id="modalPkgDetailText" class="text-xs text-slate-700 leading-relaxed whitespace-pre-line"></div>
+      </div>
+
+      <div class="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
+        <div>
+          <div id="modalQtyLabel" class="text-xs text-slate-500">Số lượng</div>
+          <div id="modalStockText" class="text-xs font-semibold text-emerald-600"></div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button type="button" id="qtyMinusBtn" class="w-8 h-8 rounded-lg border border-slate-300 bg-white font-bold hover:bg-slate-100">−</button>
+          <span id="modalQtyValue" class="w-8 text-center font-bold text-sm">1</span>
+          <button type="button" id="qtyPlusBtn" class="w-8 h-8 rounded-lg border border-slate-300 bg-white font-bold hover:bg-slate-100">+</button>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between pt-1">
+        <div id="modalTotalLabel" class="text-sm text-slate-500">Tổng thanh toán</div>
+        <div id="modalTotalPrice" class="text-xl font-extrabold text-emerald-600">0 ₫</div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <button type="button" id="addToCartConfirmBtn" class="py-3 rounded-xl border border-emerald-600 text-emerald-700 hover:bg-emerald-50 font-bold text-sm transition">
+          Thêm vào giỏ
+        </button>
+        <button type="button" id="buyNowConfirmBtn" class="py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-sm transition">
+          Mua ngay
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DRAWER: SHOPPING CART -->
+  <div id="cartDrawer" class="hidden fixed inset-0 z-50 bg-slate-900/50 flex justify-end">
+    <div class="bg-white w-full max-w-md h-full flex flex-col shadow-2xl fade-in">
+      <div class="p-5 border-b border-slate-200 flex items-center justify-between">
+        <h3 id="cartDrawerTitle" class="font-extrabold text-lg text-slate-900">Giỏ hàng của bạn</h3>
+        <button type="button" data-close-modal="cartDrawer" class="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <div id="cartItemsList" class="flex-1 overflow-y-auto p-5 space-y-3"></div>
+      <div class="p-5 border-t border-slate-200 space-y-3 bg-slate-50">
+        <div class="flex items-center justify-between">
+          <span id="cartTotalLabel" class="text-sm font-medium text-slate-600">Tổng cộng</span>
+          <span id="cartTotalText" class="text-xl font-extrabold text-emerald-600">0 ₫</span>
+        </div>
+        <button type="button" id="checkoutCartBtn" class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-sm transition">
+          Tiến hành thanh toán
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: AUTH -->
+  <div id="authModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-5 fade-in">
+      <div class="flex items-center justify-between">
+        <h3 id="authModalTitle" class="font-extrabold text-lg text-slate-900">Đăng nhập GKShop</h3>
+        <button type="button" data-close-modal="authModal" class="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div id="authTabsWrap" class="grid grid-cols-2 bg-slate-100 p-1 rounded-xl">
+        <button type="button" id="authTabLogin" class="py-2 rounded-lg text-sm font-semibold transition">Đăng nhập</button>
+        <button type="button" id="authTabRegister" class="py-2 rounded-lg text-sm font-semibold transition">Tạo tài khoản</button>
+      </div>
+
+      <p id="authForgotHint" class="hidden text-xs text-slate-500 leading-relaxed">
+        Nhập email bạn đã dùng để đăng ký tài khoản GKShop. Hệ thống sẽ gửi đường dẫn đặt lại mật khẩu mới vào hộp thư của bạn.
+      </p>
+
+      <form id="authForm" class="space-y-3.5">
+        <div id="authNameWrap" class="hidden">
+          <label for="authName" id="authNameLabel" class="block text-xs font-semibold text-slate-700 mb-1">Họ tên hiển thị</label>
+          <input id="authName" type="text" placeholder="John Doe" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+        </div>
+        <div>
+          <label for="authEmail" class="block text-xs font-semibold text-slate-700 mb-1">Email</label>
+          <input id="authEmail" type="email" required placeholder="you@example.com" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+        </div>
+        <div id="authPassWrap">
+          <div class="flex items-center justify-between mb-1">
+            <label for="authPassword" id="authPassLabel" class="block text-xs font-semibold text-slate-700">Mật khẩu</label>
+            <button type="button" id="forgotPassLink" class="text-xs font-semibold text-emerald-600 hover:text-emerald-700 hover:underline">
+              Quên mật khẩu?
+            </button>
+          </div>
+          <input id="authPassword" type="password" required minlength="6" placeholder="••••••••" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+        </div>
+        <div id="authError" class="hidden text-xs font-medium text-rose-600 bg-rose-50 border border-rose-200 px-3 py-2 rounded-xl"></div>
+        <div id="authSuccess" class="hidden text-xs font-medium text-emerald-800 bg-emerald-50 border border-emerald-200 px-3 py-2.5 rounded-xl leading-relaxed"></div>
+        <button type="submit" id="authSubmitBtn" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm transition">
+          Đăng nhập
+        </button>
+        <button type="button" id="backToLoginBtn" class="hidden w-full py-2 rounded-xl text-xs font-semibold text-slate-600 hover:text-emerald-700 hover:bg-slate-100 transition">
+          ← Quay lại đăng nhập
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: RESET PASSWORD -->
+  <div id="resetPasswordModal" class="hidden fixed inset-0 z-50 bg-slate-900/70 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-5 fade-in">
+      <div class="flex items-center justify-between">
+        <div>
+          <div class="text-xs font-bold text-emerald-700">Account Recovery</div>
+          <h3 id="resetModalTitle" class="font-extrabold text-lg text-slate-900">Đặt lại mật khẩu mới</h3>
+        </div>
+        <button type="button" data-close-modal="resetPasswordModal" class="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <form id="resetPasswordForm" class="space-y-3.5">
+        <div>
+          <label for="resetNewPass" class="block text-xs font-semibold text-slate-700 mb-1">Mật khẩu mới / New password</label>
+          <input id="resetNewPass" type="password" required minlength="6" placeholder="Min 6 characters" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+        </div>
+        <div>
+          <label for="resetConfirmPass" class="block text-xs font-semibold text-slate-700 mb-1">Nhập lại / Confirm password</label>
+          <input id="resetConfirmPass" type="password" required minlength="6" placeholder="Confirm password" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+        </div>
+        <div id="resetPassError" class="hidden text-xs font-medium text-rose-600 bg-rose-50 border border-rose-200 px-3 py-2 rounded-xl"></div>
+        <button type="submit" id="resetPassSubmitBtn" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm transition">
+          Lưu mật khẩu mới
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: MULTI-METHOD PAYMENT (VIETQR + BINANCE PAY + NOWPAYMENTS) -->
+  <div id="qrModal" class="hidden fixed inset-0 z-50 bg-slate-900/70 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-xl w-full max-h-[92vh] overflow-y-auto shadow-2xl p-6 space-y-4 fade-in">
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold mb-1">
+            GKShop Checkout
+          </div>
+          <h3 id="payModalTitle" class="font-extrabold text-lg text-slate-900">Chọn phương thức thanh toán</h3>
+        </div>
+        <button type="button" data-close-modal="qrModal" class="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Payment Method Tabs -->
+      <div class="grid grid-cols-3 bg-slate-100 p-1 rounded-xl gap-1 text-xs font-bold">
+        <button type="button" data-pay-method="vietqr" class="pay-method-btn py-2 px-2 rounded-lg transition">VietQR (VNĐ)</button>
+        <button type="button" data-pay-method="binance" class="pay-method-btn py-2 px-2 rounded-lg transition">Binance Pay</button>
+        <button type="button" data-pay-method="nowpayments" class="pay-method-btn py-2 px-2 rounded-lg transition">Card / Crypto</button>
+      </div>
+
+      <!-- PANEL 1: VIETQR VIETCOMBANK -->
+      <div id="qrModalBody" class="grid grid-cols-1 sm:grid-cols-2 gap-5 items-center">
+        <div class="flex flex-col items-center p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2.5">
+          <div class="w-52 h-52 bg-white rounded-xl border border-slate-200 flex items-center justify-center overflow-hidden p-1.5">
+            <img id="paymentQrImg" alt="Mã VietQR Vietcombank" class="max-w-full max-h-full object-contain" />
+          </div>
+          <div class="flex items-center gap-1.5 text-xs font-semibold text-amber-700 bg-amber-50 px-3 py-1 rounded-full">
+            <i data-lucide="clock" class="w-3.5 h-3.5"></i>
+            <span><strong id="qrCountdown">15:00</strong></span>
+          </div>
+        </div>
+
+        <div class="space-y-2.5 text-sm">
+          <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+            <div class="text-[11px] text-slate-500">Ngân hàng / Bank</div>
+            <div class="font-bold text-slate-900">Vietcombank (VCB)</div>
+          </div>
+
+          <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-2">
+            <div>
+              <div class="text-[11px] text-slate-500">Số tài khoản / Account</div>
+              <div id="qrAccNoText" class="font-bold text-slate-900 tracking-wide"></div>
+            </div>
+            <button type="button" id="copyAccBtn" class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:bg-emerald-50 text-xs font-semibold text-emerald-700">Copy</button>
+          </div>
+
+          <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+            <div class="text-[11px] text-slate-500">Chủ tài khoản / Name</div>
+            <div id="qrAccNameText" class="font-bold text-slate-900"></div>
+          </div>
+
+          <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-2">
+            <div>
+              <div class="text-[11px] text-slate-500">Số tiền / Amount</div>
+              <div id="qrAmountText" class="font-extrabold text-emerald-600 text-base"></div>
+            </div>
+            <button type="button" id="copyAmountBtn" class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:bg-emerald-50 text-xs font-semibold text-emerald-700">Copy</button>
+          </div>
+
+          <div class="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-between gap-2">
+            <div>
+              <div class="text-[11px] text-emerald-700 font-semibold">Nội dung CK / Order Note</div>
+              <div id="qrContentText" class="font-extrabold text-emerald-900 tracking-wider"></div>
+            </div>
+            <button type="button" id="copyContentBtn" class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-xs font-semibold text-white">Copy</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANEL 2: BINANCE PAY (0% FEE USDT) -->
+      <div id="binancePayPanel" class="hidden space-y-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+          <div class="flex flex-col items-center p-4 rounded-2xl bg-amber-50/70 border border-amber-200 space-y-2">
+            <div class="text-xs font-extrabold text-amber-900">Binance Pay QR (0% Fee)</div>
+            <div id="binanceQrBox" class="w-48 h-48 bg-white rounded-xl border border-amber-200 flex items-center justify-center overflow-hidden p-2 text-center text-xs text-slate-400">
+              Chủ shop chưa tải ảnh QR Binance Pay — hãy chuyển qua Binance ID bên cạnh.
+            </div>
+          </div>
+          <div class="space-y-2.5 text-sm">
+            <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-2">
+              <div>
+                <div class="text-[11px] text-slate-500">Binance Pay ID / UID</div>
+                <div id="binanceUidText" class="font-extrabold text-slate-900 break-all">Chưa cấu hình</div>
+              </div>
+              <button type="button" id="copyBinanceUidBtn" class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:bg-amber-50 text-xs font-semibold text-amber-700 shrink-0">Copy</button>
+            </div>
+            <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-2">
+              <div>
+                <div class="text-[11px] text-slate-500">Amount (USDT)</div>
+                <div id="binanceUsdtText" class="font-extrabold text-emerald-600 text-base">0 USDT</div>
+              </div>
+              <button type="button" id="copyUsdtBtn" class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:bg-emerald-50 text-xs font-semibold text-emerald-700 shrink-0">Copy</button>
+            </div>
+            <div class="p-3 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-between gap-2">
+              <div>
+                <div class="text-[11px] text-emerald-700 font-semibold">Transfer Note (Required)</div>
+                <div id="binanceNoteText" class="font-extrabold text-emerald-900"></div>
+              </div>
+              <button type="button" id="copyBinanceNoteBtn" class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-xs font-semibold text-white shrink-0">Copy</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANEL 3: NOWPAYMENTS (VISA / MASTERCARD / 160+ CRYPTO) -->
+      <div id="nowpaymentsPanel" class="hidden space-y-4">
+        <div class="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3 text-sm">
+          <div class="flex items-center justify-between">
+            <span class="font-extrabold text-slate-900">Visa / Mastercard & 160+ Crypto</span>
+            <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700">NOWPayments</span>
+          </div>
+          <p id="nowPayDesc" class="text-xs text-slate-600 leading-relaxed">
+            Pay with Visa, Mastercard, or any cryptocurrency via NOWPayments. Enter the exact USD amount and include your Order Code below, then click "I have paid".
+          </p>
+          <div class="grid grid-cols-2 gap-2.5">
+            <div class="p-3 rounded-xl bg-white border border-slate-200">
+              <div class="text-[11px] text-slate-500">Amount (USD)</div>
+              <div id="nowPayUsdText" class="font-extrabold text-emerald-600 text-base">$0.00</div>
+            </div>
+            <div class="p-3 rounded-xl bg-white border border-slate-200 flex items-center justify-between gap-2">
+              <div>
+                <div class="text-[11px] text-slate-500">Order Code</div>
+                <div id="nowPayCodeText" class="font-extrabold text-slate-900"></div>
+              </div>
+              <button type="button" id="copyNowCodeBtn" class="px-2 py-1 rounded-lg bg-emerald-600 text-white text-xs font-semibold">Copy</button>
+            </div>
+          </div>
+          <a id="nowPayOpenLink" href="#" target="_blank" rel="noopener" class="block w-full text-center py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm transition">
+            Open NOWPayments Checkout →
+          </a>
+          <div id="nowPayMissingHint" class="hidden text-xs text-amber-800 bg-amber-50 border border-amber-200 p-3 rounded-xl">
+            Chủ shop chưa gắn link NOWPayments trong mục Quản trị → Thanh toán VN & Quốc tế. Hãy dùng Binance Pay hoặc liên hệ hỗ trợ.
+          </div>
+        </div>
+      </div>
+
+      <!-- Status & Confirm Button -->
+      <div id="qrStatusBar" class="p-4 rounded-2xl bg-slate-100 text-slate-700 text-xs sm:text-sm space-y-3">
+        <div class="flex items-center gap-2">
+          <span id="qrStatusDot" class="w-2.5 h-2.5 rounded-full bg-amber-500 pulse-dot shrink-0"></span>
+          <span id="qrStatusText" class="font-medium">Sau khi chuyển khoản thành công, bấm nút bên dưới để shop kiểm tra và giao tài khoản.</span>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <button type="button" id="confirmTransferredBtn" class="flex-1 py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold shadow-sm transition">
+            Tôi đã chuyển tiền
+          </button>
+          <a id="qrZaloLink" href="https://zalo.me/0909603207" target="_blank" rel="noopener" class="hidden py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold transition">
+            Liên hệ hỗ trợ
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toastContainer" class="fixed bottom-4 right-4 z-50 space-y-2 max-w-xs w-full pointer-events-none"></div>
+
+  <script>
+    (function () {
+      const GKSHOP_CONFIG = {
+        supabaseUrl: 'https://rlcsbnfgcpqlywuldccf.supabase.co',
+        supabaseAnonKey: 'sb_publishable_tRs2QyCI7sw-4gPQ2uZOOA_LJzYgwzH'
+      };
+
+      const sb = window.supabase.createClient(GKSHOP_CONFIG.supabaseUrl, GKSHOP_CONFIG.supabaseAnonKey);
+
+      const I18N = {
+        vi: {
+          banner: 'Chào mừng đến GKShop! Hỗ trợ VietQR Vietcombank (VN) và Binance Pay / Card quốc tế (USD).',
+          navStore: 'Cửa hàng',
+          navOrders: 'Đơn của tôi',
+          cart: 'Giỏ hàng',
+          login: 'Đăng nhập',
+          logout: 'Đăng xuất',
+          member: 'Thành viên',
+          heroStatus: (h) => `Đang hoạt động · Giờ hỗ trợ ${h}`,
+          heroTitle: 'Tài khoản bản quyền giá tốt tại <span class="text-emerald-400">GKShop</span>',
+          heroSub: 'Uy tín · Giá rẻ · Bảo hành rõ ràng. Hỗ trợ VietQR Vietcombank tại Việt Nam và Binance Pay / Visa-Mastercard quốc tế.',
+          heroStats: (n, p) => `${n} nhóm sản phẩm · ${p} gói`,
+          heroSupport: (c) => `Zalo hỗ trợ: ${c}`,
+          searchLabel: 'Tìm nhanh sản phẩm',
+          heroPayNote: 'Thanh toán qua <strong class="text-white">Vietcombank · 1060568676</strong> hoặc chuyển <strong class="text-white">EN (USD)</strong> cho khách quốc tế.',
+          allCat: 'Tất cả',
+          showing: (n) => `Hiển thị ${n} nhóm sản phẩm`,
+          priceFrom: 'Giá từ',
+          sold: 'Đã bán',
+          options: 'lựa chọn',
+          viewPkgs: 'Xem các gói',
+          stepsHeading: 'Quy trình mua hàng trong 3 bước',
+          step1T: 'Chọn sản phẩm & gói',
+          step1D: 'Mở sản phẩm bạn cần, đọc mô tả gói, chọn thời hạn phù hợp và bấm Mua ngay hoặc Thêm vào giỏ.',
+          step2T: 'Thanh toán & bấm xác nhận',
+          step2D: 'Quét mã VietQR Vietcombank, Binance Pay (USDT) hoặc thẻ Visa/Mastercard qua NOWPayments, rồi bấm "Tôi đã chuyển tiền".',
+          step3T: 'Theo dõi & nhận tài khoản',
+          step3D: 'Trạng thái đơn cập nhật ngay trong mục Đơn của tôi kèm thông tin tài khoản và bảo hành đầy đủ.',
+          ordersHeading: 'Đơn hàng của tôi',
+          ordersSub: 'Theo dõi trạng thái kiểm tra thanh toán và nhận tài khoản đã mua.',
+          refreshStatus: 'Làm mới trạng thái',
+          continueShop: 'Tiếp tục mua sắm',
+          choosePkg: 'Chọn gói dịch vụ',
+          pkgDetailTitle: 'Thông tin gói đang chọn',
+          qty: 'Số lượng',
+          inStock: (n) => `Còn ${n} tài khoản có sẵn`,
+          total: 'Tổng thanh toán',
+          addCart: 'Thêm vào giỏ',
+          buyNow: 'Mua ngay',
+          cartTitle: 'Giỏ hàng của bạn',
+          cartEmpty: 'Giỏ hàng đang trống. Hãy chọn sản phẩm bạn muốn mua nhé!',
+          checkout: 'Tiến hành thanh toán',
+          payTitle: 'Chọn phương thức thanh toán',
+          paidBtn: 'Tôi đã chuyển tiền',
+          rePaidBtn: 'Báo đã chuyển tiền lại',
+          openQrBtn: 'Mở trang thanh toán',
+          contactSupport: (c) => `Liên hệ hỗ trợ (${c})`,
+          forgotLink: 'Quên mật khẩu?',
+          backLogin: '← Quay lại đăng nhập'
+        },
+        en: {
+          banner: 'Welcome to GKShop! Instant global digital accounts — Pay with Binance Pay (0% fee), Visa/Mastercard (NOWPayments) or VietQR.',
+          navStore: 'Store',
+          navOrders: 'My Orders',
+          cart: 'Cart',
+          login: 'Sign In',
+          logout: 'Sign Out',
+          member: 'Member',
+          heroStatus: (h) => `Online · Support hours ${h}`,
+          heroTitle: 'Premium Digital Accounts at <span class="text-emerald-400">GKShop</span>',
+          heroSub: 'Trusted · Affordable · Full warranty. Pay globally via Binance Pay (USDT, 0% fee) or Visa/Mastercard via NOWPayments.',
+          heroStats: (n, p) => `${n} products · ${p} plans`,
+          heroSupport: (c) => `Support: ${c}`,
+          searchLabel: 'Quick Search',
+          heroPayNote: 'Prices auto-convert to <strong class="text-white">USD</strong>. Pay safely via <strong class="text-white">Binance Pay</strong> or <strong class="text-white">Card / Crypto</strong>.',
+          allCat: 'All',
+          showing: (n) => `Showing ${n} products`,
+          priceFrom: 'From',
+          sold: 'Sold',
+          options: 'plans',
+          viewPkgs: 'View Plans',
+          stepsHeading: 'How to order in 3 simple steps',
+          step1T: '1. Pick a product & plan',
+          step1D: 'Browse our catalog, read the plan details, choose your duration, and click Buy Now or Add to Cart.',
+          step2T: '2. Pay & click "I have paid"',
+          step2D: 'Pay via Binance Pay (0% fee USDT), Visa/Mastercard (NOWPayments), or VietQR, then click "I have paid".',
+          step3T: '3. Receive your account',
+          step3D: 'Order status updates automatically in My Orders with your login details and full warranty support.',
+          ordersHeading: 'My Orders',
+          ordersSub: 'Track payment verification status and access your delivered digital accounts.',
+          refreshStatus: 'Refresh Status',
+          continueShop: 'Continue Shopping',
+          choosePkg: 'Select a plan',
+          pkgDetailTitle: 'Selected plan details',
+          qty: 'Quantity',
+          inStock: (n) => `${n} accounts in stock`,
+          total: 'Total',
+          addCart: 'Add to Cart',
+          buyNow: 'Buy Now',
+          cartTitle: 'Your Cart',
+          cartEmpty: 'Your cart is empty. Pick a plan from the store to get started!',
+          checkout: 'Proceed to Payment',
+          payTitle: 'Choose Payment Method',
+          paidBtn: 'I have paid',
+          rePaidBtn: 'Confirm payment again',
+          openQrBtn: 'Open Payment',
+          contactSupport: (c) => `Contact Support (${c})`,
+          forgotLink: 'Forgot password?',
+          backLogin: '← Back to Sign In'
+        }
+      };
+
+      const CAT_EN_MAP = {
+        'Sản phẩm AI': 'AI Tools',
+        'Thiết kế & Video': 'Design & Video',
+        'Giải trí / Xem phim': 'Entertainment',
+        'Học tập & Công việc': 'Study & Work'
+      };
+
+      const PRODUCT_DESC_EN = {
+        chatgpt: 'ChatGPT Plus account with latest GPT access, high speed, and full warranty throughout your subscription.',
+        capcut: 'Unlock all pro effects, fonts, and 4K watermark-free video exports for TikTok & YouTube.',
+        canva: 'Official Canva Pro upgrade on your personal email with unlimited templates & 1-click background remover.',
+        youtube: 'Ad-free videos, background playback with screen off, and YouTube Music included.',
+        netflix: 'Watch Ultra HD 4K movies with your own PIN-locked private profile on Smart TV, phone, and PC.',
+        gemini: 'Official Gemini Pro upgrade with 2TB Google One storage for fast document analysis & productivity.',
+        grok: 'Grok Premium AI assistant with real-time search, coding help, and fast analysis.',
+        wink: 'AI video enhancer, blurry photo restoration, and professional portrait retouching.'
+      };
+
+      let autoTransCache = {};
+      try { autoTransCache = JSON.parse(localStorage.getItem('gkshop_en_cache_v1') || '{}'); } catch (e) {}
+      const pendingTranslations = new Set();
+
+      function quickTranslateViToEn(text) {
+        let out = String(text || '').trim();
+        if (!out) return out;
+        if (autoTransCache[out]) return autoTransCache[out];
+        const rules = [
+          [/nâng cấp chính chủ/gi, 'Official Upgrade'],
+          [/tài khoản riêng tư/gi, 'Private Account'],
+          [/tài khoản vip/gi, 'VIP Account'],
+          [/profile riêng/gi, 'Private Profile'],
+          [/dùng chung/gi, 'Shared'],
+          [/chính chủ/gi, 'Official'],
+          [/gói trải nghiệm/gi, 'Trial Plan'],
+          [/gói tiết kiệm/gi, 'Saver Plan'],
+          [/tiết kiệm/gi, 'Saver'],
+          [/gói premium/gi, 'Premium Plan'],
+          [/bảo hành suốt thời gian sử dụng/gi, 'Full subscription warranty'],
+          [/bảo hành đầy đủ/gi, 'Full warranty'],
+          [/bảo hành full/gi, 'Full warranty'],
+          [/bảo hành theo gói/gi, 'Plan warranty'],
+          [/bảo hành/gi, 'Warranty'],
+          [/đổi mật khẩu thoải mái/gi, 'Password changeable'],
+          [/(\d+)\s*ngày/gi, '$1 Days'],
+          [/(\d+)\s*tháng/gi, '$1 Month(s)'],
+          [/(\d+)\s*năm/gi, '$1 Year(s)']
+        ];
+        let replaced = out;
+        for (const [re, rep] of rules) replaced = replaced.replace(re, rep);
+        // Nếu vẫn còn nhiều dấu tiếng Việt, gọi dịch tự động ngầm qua API miễn phí
+        if (/[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/i.test(replaced)) {
+          queueAutoTranslate(out);
+        }
+        return replaced;
+      }
+
+      async function queueAutoTranslate(viText) {
+        if (!viText || autoTransCache[viText] || pendingTranslations.has(viText)) return;
+        pendingTranslations.add(viText);
+        try {
+          const url = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=vi&tl=en&dt=t&q=' + encodeURIComponent(viText);
+          const res = await fetch(url);
+          if (!res.ok) return;
+          const data = await res.json();
+          const translated = Array.isArray(data && data[0]) ? data[0].map(part => part[0] || '').join('') : '';
+          if (translated && translated.trim()) {
+            autoTransCache[viText] = translated.trim();
+            try { localStorage.setItem('gkshop_en_cache_v1', JSON.stringify(autoTransCache)); } catch (e) {}
+            if (lang === 'en') {
+              renderProducts();
+              if (!document.getElementById('packageModal').classList.contains('hidden')) {
+                const prod = state.products.find(p => p.id === modalProductId);
+                if (prod) document.getElementById('modalProdDesc').textContent = translateProductDesc(prod);
+                renderModalPackages();
+              }
+            }
+          }
+        } catch (e) {
+          // Fallback to quickTranslateViToEn silently
+        }
+      }
+
+      function translateProductDesc(prod) {
+        if (lang !== 'en') return prod.desc || '';
+        const raw = String(prod.desc || '').trim();
+        if (autoTransCache[raw]) return autoTransCache[raw];
+        // Nếu vẫn là mô tả gốc của 8 SP mặc định thì dùng bản dịch chuẩn tay
+        if (PRODUCT_DESC_EN[prod.id] && (!raw || raw.includes('Tài khoản') || raw.includes('Mở khóa') || raw.includes('Nâng cấp') || raw.includes('Xem video') || raw.includes('Xem phim') || raw.includes('Trợ lý AI') || raw.includes('Công cụ AI'))) {
+          return PRODUCT_DESC_EN[prod.id];
+        }
+        return quickTranslateViToEn(raw);
+      }
+
+      function translateText(text) {
+        if (lang !== 'en') return String(text || '');
+        return quickTranslateViToEn(text);
+      }
+
+      const BRAND_LOGOS = {
+        chatgpt: `<svg viewBox="0 0 64 64" class="w-full h-full"><rect width="64" height="64" rx="16" fill="#10a37f"/><path fill="#fff" d="M47.2 27.6a10.2 10.2 0 0 0-.9-8.4 10.4 10.4 0 0 0-11.2-5 10.2 10.2 0 0 0-7.7-3.4 10.4 10.4 0 0 0-9.9 7.2 10.2 10.2 0 0 0-6.8 4.9 10.4 10.4 0 0 0 1.3 12.2 10.2 10.2 0 0 0 .9 8.4 10.4 10.4 0 0 0 11.2 5 10.2 10.2 0 0 0 7.7 3.4 10.4 10.4 0 0 0 9.9-7.2 10.2 10.2 0 0 0 6.8-4.9 10.4 10.4 0 0 0-1.3-12.2ZM31.8 48.8a7.6 7.6 0 0 1-4.9-1.8l.2-.1 8.1-4.7a1.3 1.3 0 0 0 .7-1.1V29.6l3.4 2a.1.1 0 0 1 .1.1v9.5a7.7 7.7 0 0 1-7.6 7.6Zm-16.4-7a7.6 7.6 0 0 1-.9-5.1l.2.1 8.1 4.7a1.3 1.3 0 0 0 1.3 0l9.9-5.7v3.9a.1.1 0 0 1-.1.1l-8.2 4.7a7.7 7.7 0 0 1-10.3-2.7Zm-2.1-17.7a7.6 7.6 0 0 1 4-3.3v9.6a1.3 1.3 0 0 0 .7 1.1l9.9 5.7-3.4 2a.1.1 0 0 1-.1 0l-8.2-4.7a7.7 7.7 0 0 1-2.9-10.4Zm28.2 6.5-9.9-5.7 3.4-2a.1.1 0 0 1 .1 0l8.2 4.7a7.7 7.7 0 0 1-1.2 13.8v-9.6a1.3 1.3 0 0 0-.6-1.2Zm3.4-5.1-.2-.1-8.1-4.7a1.3 1.3 0 0 0-1.3 0l-9.9 5.7v-3.9a.1.1 0 0 1 .1-.1l8.2-4.7a7.7 7.7 0 0 1 11.2 7.9Zm-21.4 7-3.4-2a.1.1 0 0 1-.1-.1v-9.5a7.7 7.7 0 0 1 12.6-5.9l-.2.1-8.1 4.7a1.3 1.3 0 0 0-.7 1.1l-.1 11.6Zm1.9-4 4.4-2.5 4.4 2.5v5.1l-4.4 2.5-4.4-2.5v-5.1Z"/></svg>`,
+        capcut: `<svg viewBox="0 0 64 64" class="w-full h-full"><rect width="64" height="64" rx="16" fill="#0f172a"/><path fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M16 22l32 20M48 22L16 42M16 22v20M48 22v20"/></svg>`,
+        canva: `<svg viewBox="0 0 64 64" class="w-full h-full"><defs><linearGradient id="cvg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%25" stop-color="#00c4cc"/><stop offset="100%25" stop-color="#7d2ae8"/></linearGradient></defs><rect width="64" height="64" rx="16" fill="url(#cvg)"/><text x="32" y="40" text-anchor="middle" font-family="Georgia,serif" font-style="italic" font-weight="700" font-size="22" fill="#fff">Canva</text></svg>`,
+        youtube: `<svg viewBox="0 0 64 64" class="w-full h-full"><rect width="64" height="64" rx="16" fill="#ff0000"/><rect x="12" y="19" width="40" height="26" rx="7" fill="#fff"/><polygon points="28,25 40,32 28,39" fill="#ff0000"/></svg>`,
+        netflix: `<svg viewBox="0 0 64 64" class="w-full h-full"><rect width="64" height="64" rx="16" fill="#141414"/><path fill="#b20710" d="M20 14h8v36h-8zM36 14h8v36h-8z"/><path fill="#e50914" d="M20 14h8l16 36h-8z"/></svg>`,
+        gemini: `<svg viewBox="0 0 64 64" class="w-full h-full"><defs><linearGradient id="gmg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%25" stop-color="#4285f4"/><stop offset="50%25" stop-color="#8b5cf6"/><stop offset="100%25" stop-color="#ec4899"/></linearGradient></defs><rect width="64" height="64" rx="16" fill="url(#gmg)"/><path fill="#fff" d="M32 10c2 13 9 20 22 22-13 2-20 9-22 22-2-13-9-20-22-22 13-2 20-9 22-22z"/></svg>`,
+        grok: `<svg viewBox="0 0 64 64" class="w-full h-full"><rect width="64" height="64" rx="16" fill="#111827"/><circle cx="32" cy="32" r="15" fill="none" stroke="#fff" stroke-width="5"/><line x1="18" y1="46" x2="46" y2="18" stroke="#fff" stroke-width="5" stroke-linecap="round"/></svg>`,
+        wink: `<svg viewBox="0 0 64 64" class="w-full h-full"><defs><linearGradient id="wkg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%25" stop-color="#ec4899"/><stop offset="100%25" stop-color="#8b5cf6"/></linearGradient></defs><rect width="64" height="64" rx="16" fill="url(#wkg)"/><path fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M14 22l7 20 11-16 11 16 7-20"/></svg>`,
+        spotify: `<svg viewBox="0 0 64 64" class="w-full h-full"><rect width="64" height="64" rx="16" fill="#1db954"/><path fill="none" stroke="#fff" stroke-width="4.5" stroke-linecap="round" d="M17 24c9-3 21-2 30 3M19 33c8-2 18-1 25 3M21 42c6-1.5 14-1 20 2.5"/></svg>`
+      };
+
+      let lang = 'vi';
+      try {
+        const savedLang = localStorage.getItem('gkshop_lang');
+        if (savedLang === 'en' || savedLang === 'vi') lang = savedLang;
+      } catch (e) {}
+
+      let state = {
+        settings: {
+          bankCode: 'VCB',
+          accountNo: '1060568676',
+          accountName: 'DOAN NGUYEN GIA KHANG',
+          prefix: 'GKSHOP',
+          hotline: '0909603207',
+          hours: '08:00–22:00 (GMT+7)',
+          intl: {
+            usdRate: 25000,
+            binanceUid: '',
+            binanceQr: '',
+            nowpaymentsUrl: '',
+            telegram: ''
+          }
+        },
+        currentUser: null,
+        products: [],
+        cart: [],
+        orders: []
+      };
+
+      let activeView = 'store';
+      let activeCategory = 'ALL';
+      let searchQuery = '';
+      let authMode = 'login';
+      let modalProductId = null;
+      let modalPackageId = null;
+      let modalQty = 1;
+      let activePaymentOrderId = null;
+      let activePayMethod = 'vietqr';
+      let countdownTimer = null;
+      let paymentPollTimer = null;
+
+      function t() { return I18N[lang]; }
+
+      function parseHoursAndIntl(rawHours) {
+        const str = String(rawHours || '08:00–22:00 (GMT+7)');
+        const idx = str.indexOf('|||');
+        if (idx === -1) return { hours: str, intl: { ...state.settings.intl } };
+        const cleanHours = str.slice(0, idx).trim() || '08:00–22:00 (GMT+7)';
+        try {
+          const parsed = JSON.parse(str.slice(idx + 3));
+          return { hours: cleanHours, intl: { ...state.settings.intl, ...parsed } };
+        } catch (e) {
+          return { hours: cleanHours, intl: { ...state.settings.intl } };
+        }
+      }
+
+      function toUsdAmount(vnd) {
+        const rate = Math.max(1000, Number(state.settings.intl.usdRate) || 25000);
+        const val = Math.max(0.5, Number(vnd || 0) / rate);
+        return Number(val.toFixed(2));
+      }
+
+      function formatPrice(vnd) {
+        if (lang === 'en') return '$' + toUsdAmount(vnd).toFixed(2);
+        return new Intl.NumberFormat('vi-VN').format(Number(vnd) || 0) + ' ₫';
+      }
+
+      function formatVND(vnd) {
+        return new Intl.NumberFormat('vi-VN').format(Number(vnd) || 0) + ' ₫';
+      }
+
+      function formatNum(n) {
+        return new Intl.NumberFormat(lang === 'en' ? 'en-US' : 'vi-VN').format(Number(n) || 0);
+      }
+
+      function renderProductLogoHtml(prod, sizeClass = 'w-12 h-12') {
+        const b = String(prod.badge || '').trim();
+        if (b.startsWith('data:image/') || b.startsWith('http://') || b.startsWith('https://')) {
+          return `<div class="${sizeClass} rounded-2xl overflow-hidden border border-slate-200 bg-white shadow-xs shrink-0"><img src="${escapeHtml(b)}" alt="${escapeHtml(prod.name)}" class="w-full h-full object-cover" /></div>`;
+        }
+        const lower = (String(prod.id || '') + ' ' + String(prod.name || '')).toLowerCase();
+        for (const key of Object.keys(BRAND_LOGOS)) {
+          if (lower.includes(key)) {
+            return `<div class="${sizeClass} rounded-2xl overflow-hidden shadow-xs shrink-0">${BRAND_LOGOS[key]}</div>`;
+          }
+        }
+        const initials = (b || prod.name || 'GK').slice(0, 2).toUpperCase();
+        return `<div class="${sizeClass} rounded-2xl bg-gradient-to-br ${prod.gradient || 'from-emerald-500 to-teal-600'} text-white font-extrabold flex items-center justify-center text-sm shadow-xs shrink-0">${escapeHtml(initials)}</div>`;
+      }
+
+      function getProductTotalSold(prod) {
+        return (prod.packages || []).reduce((sum, pkg) => sum + (Number(pkg.sold) || 0), 0);
+      }
+
+      function buildVietQRUrl(amount, orderCode) {
+        const acc = (state.settings.accountNo || '1060568676').replace(/\s+/g, '');
+        const name = encodeURIComponent((state.settings.accountName || 'DOAN NGUYEN GIA KHANG').trim());
+        const info = encodeURIComponent(orderCode);
+        return `https://img.vietqr.io/image/VCB-${acc}-compact2.png?amount=${Math.round(amount)}&addInfo=${info}&accountName=${name}`;
+      }
+
+      function getZaloDigits() {
+        return String(state.settings.hotline || '0909603207').replace(/\D/g, '') || '0909603207';
+      }
+
+      function getSupportHrefAndLabel() {
+        const zalo = getZaloDigits();
+        const tg = String(state.settings.intl.telegram || '').trim();
+        if (lang === 'en' && tg) {
+          const href = tg.startsWith('http') ? tg : (tg.startsWith('@') ? `https://t.me/${tg.slice(1)}` : `https://t.me/${tg}`);
+          return { href, label: tg.replace(/^https?:\/\//, '') };
+        }
+        return { href: `https://zalo.me/${zalo}`, label: zalo };
+      }
+
+      function getStatusMeta(status) {
+        const sup = getSupportHrefAndLabel();
+        if (lang === 'en') {
+          switch (status) {
+            case 'paid': return { label: 'Completed', cls: 'bg-emerald-100 text-emerald-700', note: 'Payment confirmed and account delivered.' };
+            case 'checking': return { label: 'Verifying Payment', cls: 'bg-blue-100 text-blue-700', note: 'You confirmed payment. Our team is verifying your transfer.' };
+            case 'rejected': return { label: 'Rejected — Payment Not Received', cls: 'bg-rose-100 text-rose-700', note: `We have not received funds for this order. Contact ${sup.label} with your receipt if you already paid.` };
+            case 'out_of_stock': return { label: `Out of Stock — Contact ${sup.label}`, cls: 'bg-orange-100 text-orange-800', note: `This item is temporarily out of stock. Contact ${sup.label} for priority delivery or refund.` };
+            case 'cancelled': return { label: 'Cancelled', cls: 'bg-slate-200 text-slate-600', note: 'Order cancelled.' };
+            default: return { label: 'Awaiting Payment', cls: 'bg-amber-100 text-amber-800', note: 'Complete payment and click "I have paid" for fast verification.' };
+          }
+        }
+        switch (status) {
+          case 'paid': return { label: 'Hoàn thành', cls: 'bg-emerald-100 text-emerald-700', note: 'Đã xác nhận thanh toán và bàn giao tài khoản.' };
+          case 'checking': return { label: 'Đang kiểm tra tiền', cls: 'bg-blue-100 text-blue-700', note: 'Bạn đã báo chuyển khoản. Admin đang kiểm tra giao dịch để duyệt đơn.' };
+          case 'rejected': return { label: 'Từ chối — Chưa nhận được tiền', cls: 'bg-rose-100 text-rose-700', note: `Shop chưa thấy tiền vào cho đơn này. Nếu bạn đã chuyển, hãy nhắn Zalo ${sup.label} kèm ảnh biên lai.` };
+          case 'out_of_stock': return { label: `Hết hàng — Liên hệ Zalo ${sup.label}`, cls: 'bg-orange-100 text-orange-800', note: `Sản phẩm tạm hết hàng. Vui lòng liên hệ Zalo ${sup.label} để shop cấp hàng hoặc hoàn tiền ngay.` };
+          case 'cancelled': return { label: 'Đã hủy', cls: 'bg-slate-200 text-slate-600', note: 'Đơn hàng đã hủy.' };
+          default: return { label: 'Chờ thanh toán', cls: 'bg-amber-100 text-amber-800', note: 'Hãy thanh toán và bấm "Tôi đã chuyển tiền" để shop kiểm tra.' };
+        }
+      }
+
+      function showToast(msg, type = 'success') {
+        const container = document.getElementById('toastContainer');
+        const el = document.createElement('div');
+        const colors = type === 'error' ? 'bg-rose-600 text-white' : type === 'info' ? 'bg-slate-800 text-white' : 'bg-emerald-600 text-white';
+        el.className = `pointer-events-auto px-4 py-3 rounded-2xl shadow-lg text-xs sm:text-sm font-semibold flex items-center gap-2 fade-in ${colors}`;
+        el.textContent = msg;
+        container.appendChild(el);
+        setTimeout(() => el.remove(), 3500);
+      }
+
+      function copyText(text, label) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(() => showToast((lang === 'en' ? 'Copied ' : 'Đã sao chép ') + label + ': ' + text)).catch(() => fallbackCopy(text, label));
+        } else {
+          fallbackCopy(text, label);
+        }
+      }
+
+      function fallbackCopy(text, label) {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); showToast((lang === 'en' ? 'Copied ' : 'Đã sao chép ') + label); } catch (e) {}
+        ta.remove();
+      }
+
+      function escapeHtml(str) {
+        return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      }
+
+      function refreshIcons() {
+        if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+      }
+
+      function applyLanguageUI() {
+        const dict = t();
+        document.getElementById('langViBtn').className = `px-2 py-1.5 rounded-lg transition ${lang === 'vi' ? 'bg-white text-emerald-700 shadow-xs' : 'text-slate-500'}`;
+        document.getElementById('langEnBtn').className = `px-2 py-1.5 rounded-lg transition ${lang === 'en' ? 'bg-white text-emerald-700 shadow-xs' : 'text-slate-500'}`;
+
+        document.getElementById('bannerNoticeText').textContent = dict.banner;
+        document.getElementById('navStoreDesktop').textContent = dict.navStore;
+        document.getElementById('navOrdersDesktop').textContent = dict.navOrders;
+        document.getElementById('navStoreMobile').textContent = dict.navStore;
+        document.getElementById('navOrdersMobile').textContent = dict.navOrders;
+        document.getElementById('cartBtnLabel').textContent = dict.cart;
+
+        document.getElementById('heroTitle').innerHTML = dict.heroTitle;
+        document.getElementById('heroSubtitle').textContent = dict.heroSub;
+        document.getElementById('searchBoxLabel').textContent = dict.searchLabel;
+        document.getElementById('heroPayNote').innerHTML = dict.heroPayNote;
+
+        document.getElementById('stepsHeading').textContent = dict.stepsHeading;
+        document.getElementById('step1Title').textContent = dict.step1T;
+        document.getElementById('step1Desc').textContent = dict.step1D;
+        document.getElementById('step2Title').textContent = dict.step2T;
+        document.getElementById('step2Desc').textContent = dict.step2D;
+        document.getElementById('step3Title').textContent = dict.step3T;
+        document.getElementById('step3Desc').textContent = dict.step3D;
+
+        document.getElementById('ordersHeading').textContent = dict.ordersHeading;
+        document.getElementById('ordersSubheading').textContent = dict.ordersSub;
+        document.getElementById('refreshOrdersBtn').textContent = dict.refreshStatus;
+        document.getElementById('continueShopBtn').textContent = dict.continueShop;
+
+        document.getElementById('modalChoosePkgLabel').textContent = dict.choosePkg;
+        document.getElementById('modalPkgDetailTitle').textContent = dict.pkgDetailTitle;
+        document.getElementById('modalQtyLabel').textContent = dict.qty;
+        document.getElementById('modalTotalLabel').textContent = dict.total;
+        document.getElementById('addToCartConfirmBtn').textContent = dict.addCart;
+        document.getElementById('buyNowConfirmBtn').textContent = dict.buyNow;
+
+        document.getElementById('cartDrawerTitle').textContent = dict.cartTitle;
+        document.getElementById('cartTotalLabel').textContent = dict.total;
+        document.getElementById('checkoutCartBtn').textContent = dict.checkout;
+        document.getElementById('payModalTitle').textContent = dict.payTitle;
+        document.getElementById('forgotPassLink').textContent = dict.forgotLink;
+        document.getElementById('backToLoginBtn').textContent = dict.backLogin;
+        document.getElementById('footerDesc').textContent = lang === 'en'
+          ? 'Trusted digital accounts store with fast global payments via Binance Pay, Visa/Mastercard (NOWPayments), and VietQR.'
+          : 'Hệ thống bán tài khoản số uy tín, thanh toán nhanh qua VietQR Vietcombank, Binance Pay và thẻ quốc tế.';
+        document.getElementById('footerContactTitle').textContent = lang === 'en' ? 'Contact & Support' : 'Thông tin liên hệ';
+        document.getElementById('footerPayTitle').textContent = lang === 'en' ? 'Secure Payments' : 'Thanh toán an toàn';
+        document.getElementById('footerPayDesc').textContent = lang === 'en'
+          ? 'Supports Binance Pay (0% fee USDT), Visa/Mastercard via NOWPayments, and Vietnam VietQR.'
+          : 'Hỗ trợ VietQR Napas, Binance Pay (0% phí) và Visa/Mastercard qua NOWPayments.';
+        document.getElementById('authForgotHint').textContent = lang === 'en'
+          ? 'Enter your registered email address. We will send a password recovery link to your inbox.'
+          : 'Nhập email bạn đã dùng để đăng ký tài khoản GKShop. Hệ thống sẽ gửi đường dẫn đặt lại mật khẩu mới vào hộp thư của bạn.';
+
+        renderHeaderAndMeta();
+        renderCategoryTabs();
+        renderProducts();
+        if (activeView === 'orders') renderOrdersView();
+      }
+
+      async function syncFromSupabase() {
+        try {
+          const [settingsRes, productsRes, sessionRes] = await Promise.all([
+            sb.from('shop_settings').select('*').eq('id', 1).maybeSingle(),
+            sb.from('products').select('*').order('created_at', { ascending: false }),
+            sb.auth.getSession()
+          ]);
+
+          if (settingsRes.data) {
+            const parsed = parseHoursAndIntl(settingsRes.data.hours);
+            state.settings = {
+              bankCode: settingsRes.data.bank_code || 'VCB',
+              accountNo: settingsRes.data.account_no || '1060568676',
+              accountName: settingsRes.data.account_name || 'DOAN NGUYEN GIA KHANG',
+              prefix: settingsRes.data.prefix || 'GKSHOP',
+              hotline: settingsRes.data.hotline || '0909603207',
+              hours: parsed.hours,
+              intl: parsed.intl
+            };
+          }
+
+          if (productsRes.data) {
+            state.products = productsRes.data.map(p => ({
+              id: p.id,
+              name: p.name,
+              category: p.category,
+              badge: p.badge || '',
+              gradient: p.gradient || 'from-emerald-500 to-teal-600',
+              desc: p.description || '',
+              packages: Array.isArray(p.packages) ? p.packages : []
+            }));
+          }
+
+          const session = sessionRes.data && sessionRes.data.session;
+          if (session && session.user) {
+            const { data: prof } = await sb.from('profiles').select('full_name').eq('id', session.user.id).maybeSingle();
+            state.currentUser = {
+              id: session.user.id,
+              email: session.user.email,
+              name: (prof && prof.full_name) || session.user.email.split('@')[0]
+            };
+            await fetchOrdersFromSupabase();
+          } else {
+            state.currentUser = null;
+            state.orders = [];
+          }
+        } catch (err) {
+          showToast('Connection error.', 'error');
+        }
+      }
+
+      async function fetchOrdersFromSupabase() {
+        if (!state.currentUser) return;
+        const { data } = await sb
+          .from('orders')
+          .select('*')
+          .eq('user_id', state.currentUser.id)
+          .order('created_at', { ascending: false });
+        if (data) {
+          state.orders = data.map(o => ({
+            id: o.order_code,
+            userEmail: o.user_email,
+            userName: String(o.user_name || o.user_email).replace(/^\[ARCHIVE\]\s*/i, ''),
+            items: Array.isArray(o.items) ? o.items : [],
+            total: Number(o.total_amount) || 0,
+            status: o.status,
+            createdAt: new Date(o.created_at).toLocaleString(lang === 'en' ? 'en-US' : 'vi-VN'),
+            deliveredCredentials: Array.isArray(o.delivered_credentials) ? o.delivered_credentials : []
+          }));
+        }
+      }
+
+      function setView(viewName) {
+        activeView = viewName === 'orders' ? 'orders' : 'store';
+        ['store', 'orders'].forEach(v => {
+          const el = document.getElementById(`view-${v}`);
+          if (el) el.classList.toggle('hidden', v !== activeView);
+        });
+        document.querySelectorAll('.nav-tab').forEach(btn => {
+          const isActive = btn.dataset.view === activeView;
+          btn.classList.toggle('bg-white', isActive);
+          btn.classList.toggle('text-emerald-700', isActive);
+          btn.classList.toggle('shadow-xs', isActive);
+          btn.classList.toggle('text-slate-600', !isActive);
+          btn.classList.toggle('hover:text-slate-900', !isActive);
+        });
+        document.getElementById('mobileNav').classList.add('hidden');
+        if (activeView === 'orders') renderOrdersView();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
+      function renderHeaderAndMeta() {
+        const dict = t();
+        const totalPackages = state.products.reduce((s, p) => s + p.packages.length, 0);
+        const sup = getSupportHrefAndLabel();
+        document.getElementById('heroStatsBadge').innerHTML = `<i data-lucide="package" class="w-4 h-4 text-emerald-400"></i> ${dict.heroStats(state.products.length, totalPackages)}`;
+        document.getElementById('heroStatusText').textContent = dict.heroStatus(state.settings.hours);
+        document.getElementById('heroHotlineText').textContent = dict.heroSupport(sup.label);
+        document.getElementById('heroHotlineLink').href = sup.href;
+        document.getElementById('footerHotline').textContent = dict.heroSupport(sup.label);
+        document.getElementById('footerHours').textContent = dict.heroStatus(state.settings.hours);
+
+        const cartCount = state.cart.reduce((s, item) => s + item.qty, 0);
+        document.getElementById('cartCountBadge').textContent = String(cartCount);
+
+        const authArea = document.getElementById('authArea');
+        if (state.currentUser) {
+          authArea.innerHTML = `
+            <div class="flex items-center gap-2">
+              <div class="hidden sm:block text-right leading-tight">
+                <div class="text-xs font-bold text-slate-900">${escapeHtml(state.currentUser.name)}</div>
+                <div class="text-[11px] text-emerald-600 font-semibold">${dict.member}</div>
+              </div>
+              <button type="button" id="logoutBtn" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition">${dict.logout}</button>
+            </div>
+          `;
+          document.getElementById('logoutBtn').addEventListener('click', async () => {
+            await sb.auth.signOut();
+            state.currentUser = null;
+            state.orders = [];
+            renderHeaderAndMeta();
+            if (activeView === 'orders') renderOrdersView();
+            showToast(lang === 'en' ? 'Signed out.' : 'Đã đăng xuất tài khoản.', 'info');
+          });
+        } else {
+          authArea.innerHTML = `
+            <button type="button" id="openLoginBtn" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold shadow-xs transition">
+              ${dict.login}
+            </button>
+          `;
+          document.getElementById('openLoginBtn').addEventListener('click', () => openAuthModal('login'));
+        }
+        refreshIcons();
+      }
+
+      function displayCatName(cat) {
+        if (cat === 'ALL') return t().allCat;
+        if (lang === 'en') return CAT_EN_MAP[cat] || cat;
+        return cat;
+      }
+
+      function renderCategoryTabs() {
+        const cats = ['ALL', ...Array.from(new Set(state.products.map(p => p.category)))];
+        const wrap = document.getElementById('categoryTabs');
+        wrap.innerHTML = cats.map(cat => {
+          const active = cat === activeCategory;
+          return `<button type="button" data-cat="${escapeHtml(cat)}" class="cat-btn px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition ${
+            active ? 'bg-slate-900 text-white shadow-xs' : 'bg-white border border-slate-200 text-slate-700 hover:border-emerald-300'
+          }">${escapeHtml(displayCatName(cat))}</button>`;
+        }).join('');
+        wrap.querySelectorAll('.cat-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            activeCategory = btn.dataset.cat;
+            renderCategoryTabs();
+            renderProducts();
+          });
+        });
+      }
+
+      function renderProducts() {
+        const dict = t();
+        const q = searchQuery.trim().toLowerCase();
+        const filtered = state.products.filter(p => {
+          const matchCat = activeCategory === 'ALL' || p.category === activeCategory;
+          const matchQ = !q || p.name.toLowerCase().includes(q) || p.desc.toLowerCase().includes(q) || p.category.toLowerCase().includes(q);
+          return matchCat && matchQ;
+        });
+
+        document.getElementById('resultCountText').textContent = dict.showing(filtered.length);
+        const grid = document.getElementById('productGrid');
+        if (!filtered.length) {
+          grid.innerHTML = `<div class="col-span-full bg-white rounded-2xl border border-slate-200 p-10 text-center text-slate-500 text-sm">${lang === 'en' ? 'No matching products found.' : 'Không tìm thấy sản phẩm phù hợp.'}</div>`;
+          return;
+        }
+
+        grid.innerHTML = filtered.map(p => {
+          const minPrice = p.packages.length ? Math.min(...p.packages.map(pkg => pkg.price)) : 0;
+          const totalSold = getProductTotalSold(p);
+          return `
+            <article class="bg-white rounded-2xl border border-slate-200 hover:border-emerald-300 hover:shadow-md transition p-4 flex flex-col justify-between gap-4">
+              <div class="space-y-3">
+                <div class="flex items-center justify-between gap-2">
+                  ${renderProductLogoHtml(p, 'w-12 h-12')}
+                  <span class="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-slate-100 text-slate-600">${escapeHtml(displayCatName(p.category))}</span>
+                </div>
+                <div>
+                  <h3 class="font-extrabold text-slate-900 text-base">${escapeHtml(p.name)}</h3>
+                  <p class="text-xs text-slate-500 mt-1 line-clamp-2 leading-relaxed">${escapeHtml(translateProductDesc(p))}</p>
+                </div>
+              </div>
+              <div class="pt-3 border-t border-slate-100 space-y-2.5">
+                <div class="flex items-end justify-between gap-2">
+                  <div>
+                    <span class="text-[11px] text-slate-400">${dict.priceFrom}</span>
+                    <div class="text-base font-extrabold text-emerald-600">${formatPrice(minPrice)}</div>
+                  </div>
+                  <div class="text-right">
+                    <div class="text-[11px] font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-full inline-block">${dict.sold} ${formatNum(totalSold)}</div>
+                    <div class="text-[11px] text-slate-400 mt-0.5">${p.packages.length} ${dict.options}</div>
+                  </div>
+                </div>
+                <button type="button" data-open-prod="${p.id}" class="open-prod-btn w-full py-2.5 rounded-xl bg-slate-900 hover:bg-emerald-600 text-white text-xs sm:text-sm font-bold transition">
+                  ${dict.viewPkgs}
+                </button>
+              </div>
+            </article>
+          `;
+        }).join('');
+
+        grid.querySelectorAll('.open-prod-btn').forEach(btn => {
+          btn.addEventListener('click', () => openPackageModal(btn.dataset.openProd));
+        });
+      }
+
+      function openPackageModal(productId) {
+        const prod = state.products.find(p => p.id === productId);
+        if (!prod || !prod.packages.length) return;
+        modalProductId = prod.id;
+        modalPackageId = prod.packages[0].id;
+        modalQty = 1;
+
+        document.getElementById('modalProdIcon').innerHTML = renderProductLogoHtml(prod, 'w-12 h-12');
+        document.getElementById('modalProdTitle').textContent = prod.name;
+        document.getElementById('modalProdDesc').textContent = translateProductDesc(prod);
+        document.getElementById('modalProdSoldBadge').textContent = `${t().sold} ${formatNum(getProductTotalSold(prod))}`;
+
+        renderModalPackages();
+        document.getElementById('packageModal').classList.remove('hidden');
+        refreshIcons();
+      }
+
+      function renderModalPackages() {
+        const dict = t();
+        const prod = state.products.find(p => p.id === modalProductId);
+        if (!prod) return;
+        const selectedPkg = prod.packages.find(k => k.id === modalPackageId) || prod.packages[0];
+        modalPackageId = selectedPkg.id;
+
+        const listEl = document.getElementById('modalPackagesList');
+        listEl.innerHTML = prod.packages.map(pkg => {
+          const active = pkg.id === modalPackageId;
+          const pkgSold = Number(pkg.sold) || 0;
+          return `
+            <button type="button" data-pkg-id="${pkg.id}" class="pkg-choice w-full text-left p-3.5 rounded-2xl border transition flex items-center justify-between gap-3 ${
+              active ? 'border-emerald-500 bg-emerald-50/70 ring-1 ring-emerald-500' : 'border-slate-200 hover:border-slate-300 bg-white'
+            }">
+              <div>
+                <div class="font-bold text-sm text-slate-900">${escapeHtml(translateText(pkg.label))}</div>
+                <div class="text-[11px] text-slate-500 mt-0.5">${escapeHtml(translateText(pkg.warranty || (lang === 'en' ? 'Full warranty' : 'Bảo hành theo gói')))} · ${lang === 'en' ? 'Stock' : 'Còn'} ${pkg.stock} · ${dict.sold} ${formatNum(pkgSold)}</div>
+              </div>
+              <div class="font-extrabold text-sm text-emerald-600 shrink-0">${formatPrice(pkg.price)}</div>
+            </button>
+          `;
+        }).join('');
+
+        listEl.querySelectorAll('.pkg-choice').forEach(btn => {
+          btn.addEventListener('click', () => { modalPackageId = btn.dataset.pkgId; modalQty = 1; renderModalPackages(); });
+        });
+
+        const detailText = (selectedPkg.details && String(selectedPkg.details).trim())
+          ? translateText(String(selectedPkg.details).trim())
+          : `${translateText(selectedPkg.label)} — ${translateText(selectedPkg.warranty || (lang === 'en' ? 'Full warranty included' : 'Bảo hành đầy đủ trong suốt thời gian sử dụng'))}.`;
+        document.getElementById('modalPkgDetailText').textContent = detailText;
+        document.getElementById('modalStockText').textContent = dict.inStock(selectedPkg.stock);
+        document.getElementById('modalQtyValue').textContent = String(modalQty);
+        document.getElementById('modalTotalPrice').textContent = formatPrice(selectedPkg.price * modalQty);
+        refreshIcons();
+      }
+
+      function addToCart(productId, packageId, qty) {
+        const prod = state.products.find(p => p.id === productId);
+        if (!prod) return;
+        const pkg = prod.packages.find(k => k.id === packageId);
+        if (!pkg) return;
+        const existing = state.cart.find(c => c.productId === productId && c.packageId === packageId);
+        if (existing) existing.qty = Math.min(Math.max(1, pkg.stock), existing.qty + qty);
+        else state.cart.push({ productId, packageId, productName: prod.name, packageLabel: pkg.label, price: pkg.price, qty });
+        renderHeaderAndMeta();
+      }
+
+      function renderCartDrawer() {
+        const dict = t();
+        const list = document.getElementById('cartItemsList');
+        const total = state.cart.reduce((s, item) => s + item.price * item.qty, 0);
+        document.getElementById('cartTotalText').textContent = formatPrice(total);
+
+        if (!state.cart.length) {
+          list.innerHTML = `<div class="text-center py-14 text-slate-400 text-sm">${dict.cartEmpty}</div>`;
+          return;
+        }
+
+        list.innerHTML = state.cart.map((item, idx) => `
+          <div class="p-3.5 rounded-2xl border border-slate-200 bg-white flex items-start justify-between gap-3">
+            <div class="space-y-1">
+              <div class="font-bold text-sm text-slate-900">${escapeHtml(item.productName)}</div>
+              <div class="text-xs text-slate-500">${escapeHtml(item.packageLabel)}</div>
+              <div class="text-sm font-extrabold text-emerald-600">${formatPrice(item.price * item.qty)}</div>
+            </div>
+            <div class="flex flex-col items-end gap-2">
+              <button type="button" data-remove-idx="${idx}" class="remove-cart-btn text-xs text-rose-500 hover:underline font-semibold">${lang === 'en' ? 'Remove' : 'Xóa'}</button>
+              <div class="flex items-center gap-1.5">
+                <button type="button" data-cart-dec="${idx}" class="cart-dec w-7 h-7 rounded-lg border border-slate-200 text-xs font-bold hover:bg-slate-100">−</button>
+                <span class="w-6 text-center text-xs font-bold">${item.qty}</span>
+                <button type="button" data-cart-inc="${idx}" class="cart-inc w-7 h-7 rounded-lg border border-slate-200 text-xs font-bold hover:bg-slate-100">+</button>
+              </div>
+            </div>
+          </div>
+        `).join('');
+
+        list.querySelectorAll('.remove-cart-btn').forEach(btn => btn.addEventListener('click', () => { state.cart.splice(Number(btn.dataset.removeIdx), 1); renderHeaderAndMeta(); renderCartDrawer(); }));
+        list.querySelectorAll('.cart-dec').forEach(btn => btn.addEventListener('click', () => { const idx = Number(btn.dataset.cartDec); if (state.cart[idx].qty > 1) state.cart[idx].qty -= 1; else state.cart.splice(idx, 1); renderHeaderAndMeta(); renderCartDrawer(); }));
+        list.querySelectorAll('.cart-inc').forEach(btn => btn.addEventListener('click', () => { state.cart[Number(btn.dataset.cartInc)].qty += 1; renderHeaderAndMeta(); renderCartDrawer(); }));
+      }
+
+      async function createOrderFromItems(items) {
+        if (!state.currentUser) {
+          showToast(lang === 'en' ? 'Please sign in before checkout.' : 'Vui lòng đăng nhập trước khi thanh toán.', 'info');
+          openAuthModal('login');
+          return null;
+        }
+        const total = items.reduce((s, i) => s + i.price * i.qty, 0);
+        const rand = Math.floor(10000 + Math.random() * 89999);
+        const prefix = (state.settings.prefix || 'GKSHOP').replace(/[^A-Z0-9]/gi, '').toUpperCase();
+        const code = `${prefix}${rand}`;
+
+        const { error } = await sb.from('orders').insert({
+          order_code: code,
+          user_id: state.currentUser.id,
+          user_email: state.currentUser.email,
+          user_name: state.currentUser.name,
+          items,
+          total_amount: total,
+          status: 'pending'
+        });
+
+        if (error) {
+          showToast('Order error: ' + error.message, 'error');
+          return null;
+        }
+
+        const order = {
+          id: code,
+          userEmail: state.currentUser.email,
+          userName: state.currentUser.name,
+          items: items.map(i => ({ ...i })),
+          total,
+          status: 'pending',
+          createdAt: new Date().toLocaleString(lang === 'en' ? 'en-US' : 'vi-VN'),
+          deliveredCredentials: []
+        };
+        state.orders.unshift(order);
+        return order;
+      }
+
+      function clearPaymentTimers() {
+        if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; }
+        if (paymentPollTimer) { clearInterval(paymentPollTimer); paymentPollTimer = null; }
+      }
+
+      function setPayMethod(method) {
+        activePayMethod = method;
+        document.getElementById('qrModalBody').classList.toggle('hidden', method !== 'vietqr');
+        document.getElementById('binancePayPanel').classList.toggle('hidden', method !== 'binance');
+        document.getElementById('nowpaymentsPanel').classList.toggle('hidden', method !== 'nowpayments');
+        document.querySelectorAll('.pay-method-btn').forEach(btn => {
+          const active = btn.dataset.payMethod === method;
+          btn.classList.toggle('bg-white', active);
+          btn.classList.toggle('text-emerald-700', active);
+          btn.classList.toggle('shadow-xs', active);
+          btn.classList.toggle('text-slate-600', !active);
+        });
+      }
+
+      function updateQrModalStatusUI(order) {
+        const dict = t();
+        const sup = getSupportHrefAndLabel();
+        const statusBar = document.getElementById('qrStatusBar');
+        const statusDot = document.getElementById('qrStatusDot');
+        const statusText = document.getElementById('qrStatusText');
+        const confirmBtn = document.getElementById('confirmTransferredBtn');
+        const zaloLink = document.getElementById('qrZaloLink');
+        zaloLink.href = sup.href;
+        zaloLink.textContent = dict.contactSupport(sup.label);
+
+        if (order.status === 'paid') {
+          statusBar.className = 'p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs sm:text-sm space-y-3';
+          statusDot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0';
+          statusText.textContent = lang === 'en' ? 'Order completed! View your account details in My Orders.' : 'Đơn hàng đã hoàn thành! Xem thông tin tài khoản trong mục Đơn của tôi.';
+          confirmBtn.classList.add('hidden');
+          zaloLink.classList.add('hidden');
+        } else if (order.status === 'checking') {
+          statusBar.className = 'p-4 rounded-2xl bg-blue-50 border border-blue-200 text-blue-800 text-xs sm:text-sm space-y-3';
+          statusDot.className = 'w-2.5 h-2.5 rounded-full bg-blue-500 pulse-dot shrink-0';
+          statusText.textContent = lang === 'en' ? 'Payment confirmation sent! Our team is verifying your transfer...' : 'Đã gửi xác nhận chuyển tiền! Shop đang kiểm tra giao dịch để duyệt đơn...';
+          confirmBtn.classList.add('hidden');
+          zaloLink.classList.add('hidden');
+        } else if (order.status === 'rejected') {
+          statusBar.className = 'p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs sm:text-sm space-y-3';
+          statusDot.className = 'w-2.5 h-2.5 rounded-full bg-rose-500 shrink-0';
+          statusText.textContent = getStatusMeta('rejected').note;
+          confirmBtn.classList.remove('hidden');
+          confirmBtn.textContent = dict.rePaidBtn;
+          zaloLink.classList.remove('hidden');
+        } else if (order.status === 'out_of_stock') {
+          statusBar.className = 'p-4 rounded-2xl bg-orange-50 border border-orange-200 text-orange-900 text-xs sm:text-sm space-y-3';
+          statusDot.className = 'w-2.5 h-2.5 rounded-full bg-orange-500 shrink-0';
+          statusText.textContent = getStatusMeta('out_of_stock').note;
+          confirmBtn.classList.add('hidden');
+          zaloLink.classList.remove('hidden');
+        } else {
+          statusBar.className = 'p-4 rounded-2xl bg-slate-100 text-slate-700 text-xs sm:text-sm space-y-3';
+          statusDot.className = 'w-2.5 h-2.5 rounded-full bg-amber-500 pulse-dot shrink-0';
+          statusText.textContent = getStatusMeta('pending').note;
+          confirmBtn.classList.remove('hidden');
+          confirmBtn.textContent = dict.paidBtn;
+          zaloLink.classList.add('hidden');
+        }
+      }
+
+      function openPaymentModal(orderId) {
+        const order = state.orders.find(o => o.id === orderId);
+        if (!order) return;
+        activePaymentOrderId = order.id;
+
+        const usdVal = toUsdAmount(order.total);
+        const intl = state.settings.intl || {};
+
+        // 1. VietQR data
+        document.getElementById('paymentQrImg').src = buildVietQRUrl(order.total, order.id);
+        document.getElementById('qrAccNoText').textContent = state.settings.accountNo;
+        document.getElementById('qrAccNameText').textContent = state.settings.accountName;
+        document.getElementById('qrAmountText').textContent = formatVND(order.total);
+        document.getElementById('qrContentText').textContent = order.id;
+
+        // 2. Binance Pay data
+        document.getElementById('binanceUidText').textContent = intl.binanceUid || (lang === 'en' ? 'Contact support for Binance ID' : 'Chưa điền trong Admin');
+        document.getElementById('binanceUsdtText').textContent = `${usdVal.toFixed(2)} USDT`;
+        document.getElementById('binanceNoteText').textContent = order.id;
+        const qrBox = document.getElementById('binanceQrBox');
+        if (intl.binanceQr) {
+          qrBox.innerHTML = `<img src="${escapeHtml(intl.binanceQr)}" alt="Binance Pay QR" class="w-full h-full object-contain rounded-lg" />`;
+        } else {
+          qrBox.textContent = lang === 'en' ? 'Send USDT using the Binance Pay ID on the right.' : 'Chuyển USDT bằng Binance Pay ID ở bên phải (hoặc tải ảnh QR trong Admin).';
+        }
+
+        // 3. NOWPayments data
+        document.getElementById('nowPayUsdText').textContent = `$${usdVal.toFixed(2)}`;
+        document.getElementById('nowPayCodeText').textContent = order.id;
+        const npLink = document.getElementById('nowPayOpenLink');
+        const npHint = document.getElementById('nowPayMissingHint');
+        if (intl.nowpaymentsUrl) {
+          npLink.href = intl.nowpaymentsUrl;
+          npLink.classList.remove('hidden');
+          npHint.classList.add('hidden');
+        } else {
+          npLink.classList.add('hidden');
+          npHint.classList.remove('hidden');
+        }
+
+        // Mặc định mở Binance Pay nếu đang ở EN, VietQR nếu ở VI
+        setPayMethod(lang === 'en' ? 'binance' : 'vietqr');
+
+        clearPaymentTimers();
+        updateQrModalStatusUI(order);
+
+        if (order.status === 'pending' || order.status === 'checking') {
+          paymentPollTimer = setInterval(async () => {
+            try {
+              const { data } = await sb.from('orders').select('status, delivered_credentials').eq('order_code', order.id).maybeSingle();
+              if (data && data.status !== order.status) {
+                order.status = data.status;
+                order.deliveredCredentials = Array.isArray(data.delivered_credentials) ? data.delivered_credentials : [];
+                updateQrModalStatusUI(order);
+                if (activeView === 'orders') renderOrdersView();
+                if (data.status === 'paid') {
+                  clearPaymentTimers();
+                  await syncFromSupabase();
+                  renderProducts();
+                  showToast(lang === 'en' ? `Order ${order.id} completed!` : `Đơn ${order.id} đã hoàn thành!`);
+                }
+              }
+            } catch (e) {}
+          }, 5000);
+        }
+
+        let seconds = 15 * 60;
+        const tick = () => {
+          const m = String(Math.floor(seconds / 60)).padStart(2, '0');
+          const s = String(seconds % 60).padStart(2, '0');
+          document.getElementById('qrCountdown').textContent = `${m}:${s}`;
+          if (seconds > 0) seconds -= 1;
+          else if (countdownTimer) clearInterval(countdownTimer);
+        };
+        tick();
+        countdownTimer = setInterval(tick, 1000);
+
+        document.getElementById('qrModal').classList.remove('hidden');
+        refreshIcons();
+      }
+
+      async function confirmTransferred() {
+        const order = state.orders.find(o => o.id === activePaymentOrderId);
+        if (!order) return;
+        const btn = document.getElementById('confirmTransferredBtn');
+        btn.disabled = true;
+        btn.textContent = lang === 'en' ? 'Sending...' : 'Đang gửi xác nhận...';
+
+        const { error } = await sb.from('orders').update({ status: 'checking' }).eq('order_code', order.id);
+        btn.disabled = false;
+        if (error) {
+          btn.textContent = t().paidBtn;
+          showToast(error.message, 'error');
+          return;
+        }
+
+        order.status = 'checking';
+        updateQrModalStatusUI(order);
+        if (activeView === 'orders') renderOrdersView();
+        showToast(lang === 'en' ? 'Payment confirmation sent!' : 'Đã báo chuyển tiền thành công!');
+      }
+
+      function renderOrdersView() {
+        const dict = t();
+        const wrap = document.getElementById('ordersContent');
+        if (!state.currentUser) {
+          wrap.innerHTML = `
+            <div class="bg-white rounded-3xl border border-slate-200 p-10 text-center space-y-3">
+              <div class="font-bold text-slate-900">${lang === 'en' ? 'Please sign in' : 'Bạn chưa đăng nhập'}</div>
+              <p class="text-sm text-slate-500">${dict.ordersSub}</p>
+              <button type="button" id="ordersLoginBtn" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold">${dict.login}</button>
+            </div>
+          `;
+          document.getElementById('ordersLoginBtn').addEventListener('click', () => openAuthModal('login'));
+          return;
+        }
+
+        if (!state.orders.length) {
+          wrap.innerHTML = `<div class="bg-white rounded-3xl border border-slate-200 p-10 text-center text-sm text-slate-500">${lang === 'en' ? 'You have no orders yet.' : 'Chưa có đơn hàng nào.'}</div>`;
+          return;
+        }
+
+        const sup = getSupportHrefAndLabel();
+        wrap.innerHTML = `<div class="space-y-4">${state.orders.map(o => {
+          const meta = getStatusMeta(o.status);
+          return `
+            <div class="bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class="font-extrabold text-slate-900">${escapeHtml(o.id)}</span>
+                  <span class="text-xs px-2.5 py-0.5 rounded-full font-bold ${meta.cls}">${escapeHtml(meta.label)}</span>
+                </div>
+                <span class="text-xs text-slate-500">${escapeHtml(o.createdAt)}</span>
+              </div>
+              <div class="text-sm text-slate-700 space-y-1">
+                ${o.items.map(i => `<div>• <strong>${escapeHtml(i.productName)}</strong> — ${escapeHtml(i.packageLabel)} (x${i.qty})</div>`).join('')}
+              </div>
+              <div class="text-xs text-slate-500">${escapeHtml(meta.note)}</div>
+              <div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-100">
+                <div class="font-extrabold text-emerald-600">${formatPrice(o.total)}</div>
+                <div class="flex flex-wrap items-center gap-2">
+                  ${(o.status === 'pending' || o.status === 'checking' || o.status === 'rejected')
+                    ? `<button type="button" data-pay-order="${o.id}" class="reopen-qr-btn px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold">${dict.openQrBtn}</button>`
+                    : ''}
+                  ${(o.status === 'out_of_stock' || o.status === 'rejected')
+                    ? `<a href="${sup.href}" target="_blank" rel="noopener" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold">${dict.contactSupport(sup.label)}</a>`
+                    : ''}
+                </div>
+              </div>
+              ${o.status === 'paid' && o.deliveredCredentials.length ? `
+                <div class="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 space-y-1.5">
+                  <div class="text-xs font-bold text-emerald-900">${lang === 'en' ? 'Delivered account details:' : 'Thông tin tài khoản đã bàn giao:'}</div>
+                  ${o.deliveredCredentials.map(line => `<div class="font-mono text-xs text-emerald-800 bg-white px-2.5 py-1.5 rounded-lg border border-emerald-100 break-all">${escapeHtml(line)}</div>`).join('')}
+                </div>
+              ` : ''}
+            </div>
+          `;
+        }).join('')}</div>`;
+
+        wrap.querySelectorAll('.reopen-qr-btn').forEach(btn => btn.addEventListener('click', () => openPaymentModal(btn.dataset.payOrder)));
+      }
+
+      function openAuthModal(mode) {
+        authMode = mode;
+        const isReg = mode === 'register';
+        const isForgot = mode === 'forgot';
+        document.getElementById('authModalTitle').textContent = isForgot
+          ? (lang === 'en' ? 'Reset Password' : 'Khôi phục mật khẩu')
+          : isReg ? (lang === 'en' ? 'Create Account' : 'Tạo tài khoản GKShop') : (lang === 'en' ? 'Sign In to GKShop' : 'Đăng nhập GKShop');
+        document.getElementById('authTabsWrap').classList.toggle('hidden', isForgot);
+        document.getElementById('authForgotHint').classList.toggle('hidden', !isForgot);
+        document.getElementById('authNameWrap').classList.toggle('hidden', !isReg);
+        document.getElementById('authName').required = isReg;
+        document.getElementById('authPassWrap').classList.toggle('hidden', isForgot);
+        document.getElementById('authPassword').required = !isForgot;
+        document.getElementById('forgotPassLink').classList.toggle('hidden', isReg || isForgot);
+        document.getElementById('backToLoginBtn').classList.toggle('hidden', !isForgot);
+        document.getElementById('authSubmitBtn').textContent = isForgot
+          ? (lang === 'en' ? 'Send Recovery Link' : 'Gửi link khôi phục mật khẩu')
+          : isReg ? (lang === 'en' ? 'Sign Up' : 'Đăng ký tài khoản') : (lang === 'en' ? 'Sign In' : 'Đăng nhập');
+        document.getElementById('authError').classList.add('hidden');
+        document.getElementById('authSuccess').classList.add('hidden');
+        document.getElementById('authTabLogin').textContent = lang === 'en' ? 'Sign In' : 'Đăng nhập';
+        document.getElementById('authTabRegister').textContent = lang === 'en' ? 'Sign Up' : 'Tạo tài khoản';
+        document.getElementById('authTabLogin').className = `py-2 rounded-lg text-sm font-semibold transition ${!isReg ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500'}`;
+        document.getElementById('authTabRegister').className = `py-2 rounded-lg text-sm font-semibold transition ${isReg ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500'}`;
+        document.getElementById('authModal').classList.remove('hidden');
+      }
+
+      function openResetPasswordModal() {
+        document.getElementById('resetPassError').classList.add('hidden');
+        document.getElementById('resetNewPass').value = '';
+        document.getElementById('resetConfirmPass').value = '';
+        document.getElementById('resetPasswordModal').classList.remove('hidden');
+        refreshIcons();
+      }
+
+      // Wire Listeners
+      document.getElementById('langViBtn').addEventListener('click', () => { lang = 'vi'; try { localStorage.setItem('gkshop_lang', 'vi'); } catch (e) {} applyLanguageUI(); });
+      document.getElementById('langEnBtn').addEventListener('click', () => { lang = 'en'; try { localStorage.setItem('gkshop_lang', 'en'); } catch (e) {} applyLanguageUI(); });
+      document.getElementById('closeBannerBtn').addEventListener('click', () => document.getElementById('topBanner').classList.add('hidden'));
+      document.getElementById('brandHomeBtn').addEventListener('click', () => setView('store'));
+      document.getElementById('mobileMenuBtn').addEventListener('click', () => document.getElementById('mobileNav').classList.toggle('hidden'));
+      document.querySelectorAll('.nav-tab, .nav-jump').forEach(btn => btn.addEventListener('click', () => setView(btn.dataset.view)));
+      document.getElementById('searchInput').addEventListener('input', (e) => { searchQuery = e.target.value; renderProducts(); });
+      document.getElementById('openCartBtn').addEventListener('click', () => { renderCartDrawer(); document.getElementById('cartDrawer').classList.remove('hidden'); });
+      document.getElementById('refreshOrdersBtn').addEventListener('click', async () => { await fetchOrdersFromSupabase(); renderOrdersView(); showToast(lang === 'en' ? 'Status updated!' : 'Đã cập nhật trạng thái!'); });
+
+      document.querySelectorAll('.pay-method-btn').forEach(btn => btn.addEventListener('click', () => setPayMethod(btn.dataset.payMethod)));
+      document.querySelectorAll('[data-close-modal]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const targetId = btn.dataset.closeModal;
+          document.getElementById(targetId).classList.add('hidden');
+          if (targetId === 'qrModal') clearPaymentTimers();
+        });
+      });
+
+      document.getElementById('qtyMinusBtn').addEventListener('click', () => { if (modalQty > 1) { modalQty -= 1; renderModalPackages(); } });
+      document.getElementById('qtyPlusBtn').addEventListener('click', () => {
+        const prod = state.products.find(p => p.id === modalProductId);
+        const pkg = prod && prod.packages.find(k => k.id === modalPackageId);
+        if (pkg && modalQty < Math.max(1, pkg.stock)) { modalQty += 1; renderModalPackages(); }
+      });
+
+      document.getElementById('addToCartConfirmBtn').addEventListener('click', () => {
+        addToCart(modalProductId, modalPackageId, modalQty);
+        document.getElementById('packageModal').classList.add('hidden');
+        showToast(lang === 'en' ? 'Added to cart!' : 'Đã thêm sản phẩm vào giỏ hàng!');
+      });
+
+      document.getElementById('buyNowConfirmBtn').addEventListener('click', async () => {
+        const prod = state.products.find(p => p.id === modalProductId);
+        const pkg = prod && prod.packages.find(k => k.id === modalPackageId);
+        if (!prod || !pkg) return;
+        document.getElementById('packageModal').classList.add('hidden');
+        const order = await createOrderFromItems([{ productId: prod.id, packageId: pkg.id, productName: prod.name, packageLabel: pkg.label, price: pkg.price, qty: modalQty }]);
+        if (order) openPaymentModal(order.id);
+      });
+
+      document.getElementById('checkoutCartBtn').addEventListener('click', async () => {
+        if (!state.cart.length) { showToast(lang === 'en' ? 'Your cart is empty.' : 'Giỏ hàng đang trống.', 'error'); return; }
+        const order = await createOrderFromItems(state.cart);
+        if (order) {
+          state.cart = [];
+          renderHeaderAndMeta();
+          document.getElementById('cartDrawer').classList.add('hidden');
+          openPaymentModal(order.id);
+        }
+      });
+
+      document.getElementById('authTabLogin').addEventListener('click', () => openAuthModal('login'));
+      document.getElementById('authTabRegister').addEventListener('click', () => openAuthModal('register'));
+      document.getElementById('forgotPassLink').addEventListener('click', () => openAuthModal('forgot'));
+      document.getElementById('backToLoginBtn').addEventListener('click', () => openAuthModal('login'));
+
+      document.getElementById('authForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('authEmail').value.trim().toLowerCase();
+        const password = document.getElementById('authPassword').value;
+        const name = document.getElementById('authName').value.trim();
+        const errEl = document.getElementById('authError');
+        const okEl = document.getElementById('authSuccess');
+        const submitBtn = document.getElementById('authSubmitBtn');
+        errEl.classList.add('hidden');
+        okEl.classList.add('hidden');
+
+        try {
+          if (authMode === 'forgot') {
+            submitBtn.disabled = true;
+            const redirectUrl = window.location.origin.startsWith('http') ? window.location.origin + window.location.pathname : 'https://gkshop.site/';
+            const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: redirectUrl });
+            if (error) throw error;
+            okEl.textContent = lang === 'en'
+              ? `Recovery link sent to ${email}. Check your inbox or Spam folder.`
+              : `Đã gửi link khôi phục mật khẩu về ${email}. Kiểm tra Hộp thư đến hoặc Spam nhé!`;
+            okEl.classList.remove('hidden');
+            showToast(lang === 'en' ? 'Recovery email sent!' : 'Đã gửi email khôi phục!');
+            return;
+          }
+          if (authMode === 'register') {
+            const { error } = await sb.auth.signUp({ email, password, options: { data: { full_name: name || email.split('@')[0] } } });
+            if (error) throw error;
+          } else {
+            const { error } = await sb.auth.signInWithPassword({ email, password });
+            if (error) throw error;
+          }
+          await syncFromSupabase();
+          document.getElementById('authModal').classList.add('hidden');
+          renderHeaderAndMeta();
+          showToast(lang === 'en' ? 'Welcome to GKShop!' : 'Đăng nhập thành công!');
+        } catch (err) {
+          errEl.textContent = err.message || 'Authentication failed.';
+          errEl.classList.remove('hidden');
+        } finally {
+          submitBtn.disabled = false;
+        }
+      });
+
+      document.getElementById('resetPasswordForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const p1 = document.getElementById('resetNewPass').value;
+        const p2 = document.getElementById('resetConfirmPass').value;
+        const errEl = document.getElementById('resetPassError');
+        errEl.classList.add('hidden');
+        if (p1 !== p2) { errEl.textContent = 'Passwords do not match / Hai mật khẩu không khớp.'; errEl.classList.remove('hidden'); return; }
+        try {
+          const { error } = await sb.auth.updateUser({ password: p1 });
+          if (error) throw error;
+          if (window.history && window.history.replaceState) window.history.replaceState({}, document.title, window.location.pathname);
+          document.getElementById('resetPasswordModal').classList.add('hidden');
+          await syncFromSupabase();
+          renderHeaderAndMeta();
+          showToast(lang === 'en' ? 'Password updated!' : 'Đổi mật khẩu mới thành công!');
+        } catch (err) {
+          errEl.textContent = err.message;
+          errEl.classList.remove('hidden');
+        }
+      });
+
+      sb.auth.onAuthStateChange((event) => { if (event === 'PASSWORD_RECOVERY') openResetPasswordModal(); });
+
+      document.getElementById('copyAccBtn').addEventListener('click', () => copyText(state.settings.accountNo, 'Account'));
+      document.getElementById('copyAmountBtn').addEventListener('click', () => { const o = state.orders.find(x => x.id === activePaymentOrderId); if (o) copyText(String(o.total), 'Amount'); });
+      document.getElementById('copyContentBtn').addEventListener('click', () => { if (activePaymentOrderId) copyText(activePaymentOrderId, 'Order Note'); });
+      document.getElementById('copyBinanceUidBtn').addEventListener('click', () => { if (state.settings.intl.binanceUid) copyText(state.settings.intl.binanceUid, 'Binance UID'); });
+      document.getElementById('copyUsdtBtn').addEventListener('click', () => { const o = state.orders.find(x => x.id === activePaymentOrderId); if (o) copyText(toUsdAmount(o.total).toFixed(2), 'USDT'); });
+      document.getElementById('copyBinanceNoteBtn').addEventListener('click', () => { if (activePaymentOrderId) copyText(activePaymentOrderId, 'Order Note'); });
+      document.getElementById('copyNowCodeBtn').addEventListener('click', () => { if (activePaymentOrderId) copyText(activePaymentOrderId, 'Order Code'); });
+      document.getElementById('confirmTransferredBtn').addEventListener('click', confirmTransferred);
+
+      (async function init() {
+        const isRecoveryHash = window.location.hash && window.location.hash.includes('type=recovery');
+        await syncFromSupabase();
+        applyLanguageUI();
+        setView('store');
+        if (isRecoveryHash) openResetPasswordModal();
+      })();
+    })();
+  </script>
+</body>
+</html>
